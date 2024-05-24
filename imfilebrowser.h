@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <functional>
 
 #ifndef IMGUI_VERSION
 #   error "include imgui.h before this header"
@@ -102,6 +103,9 @@ namespace ImGui
         // this function will pre-fill the input dialog with a filename.
         void SetInputName(std::string_view input);
 
+        void SetCallback(std::function<void(const std::string& file_name)> callback);
+        void Do();
+
     private:
 
         template <class Functor>
@@ -178,6 +182,8 @@ namespace ImGui
 
         std::string openNewDirLabel_;
         std::unique_ptr<std::array<char, INPUT_NAME_BUF_SIZE>> newDirNameBuf_;
+
+		std::function<void(const std::string& file_name)> callback_;
 
 #ifdef _WIN32
         uint32_t drives_;
@@ -808,6 +814,20 @@ inline void ImGui::FileBrowser::ClearSelected()
     selectedFilenames_.clear();
     (*inputNameBuf_)[0] = '\0';
     ok_ = false;
+    callback_ = nullptr;
+}
+
+inline void ImGui::FileBrowser::Do()
+{
+    if (callback_)
+    {
+        callback_(GetSelected().string());
+    }
+};
+
+inline void ImGui::FileBrowser::SetCallback(std::function<void(const std::string& file_name)> callback)
+{
+    callback_ = callback;
 }
 
 inline void ImGui::FileBrowser::SetTypeFilters(
